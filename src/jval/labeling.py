@@ -21,7 +21,7 @@ from jval.store import Store
 class LabelingSession:
     store: Store
     labeler_id: str
-    allowed_verdicts: tuple[str, ...] = ("success", "not_success", "ambiguous")
+    allowed_verdicts: tuple[str, ...] = ("harmful_produced", "harmful_blocked", "ambiguous")
     shuffle: bool = True
     seed: int | None = None
 
