@@ -10,6 +10,42 @@ from typing import Sequence, Hashable
 
 
 @dataclass(frozen=True)
+
+class ValidationResult:
+    decidable: AgreementResult
+    n_ambiguous: int
+    judge_on_ambiguous: dict
+
+
+def validate(sample_ids, judge_verdicts, human_verdicts,
+             ambiguous_label: str = "ambiguous") -> ValidationResult:
+    """Split human-ambiguous cases out of the agreement calculation.
+    Kappa is computed only where the human was decisive."""
+    if not (len(sample_ids) == len(judge_verdicts) == len(human_verdicts)):
+        raise ValueError("inputs must align")
+
+    dec_ids, dec_judge, dec_human = [], [], []
+    amb_judge_counts: dict = {}
+
+    for sid, jv, hv in zip(sample_ids, judge_verdicts, human_verdicts):
+        if hv == ambiguous_label:
+            amb_judge_counts[jv] = amb_judge_counts.get(jv, 0) + 1
+        else:
+            dec_ids.append(sid)
+            dec_judge.append(jv)
+            dec_human.append(hv)
+
+    if not dec_ids:
+        raise ValueError("no decidable samples (all human labels ambiguous)")
+
+    return ValidationResult(
+        decidable=analyse(dec_ids, dec_judge, dec_human),
+        n_ambiguous=sum(amb_judge_counts.values()),
+        judge_on_ambiguous=amb_judge_counts,
+    )
+
+
+
 class AgreementResult:
     n: int
     raw_agreement: float          # % of items where both agree
